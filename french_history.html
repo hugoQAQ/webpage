@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Chronologie de l'Histoire de France</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0057ff;
+      --secondary: #fff;
+      --accent: #ff0000;
+      --text: #222;
+      --muted: #888;
+      --card: #fff;
+      --border: #e5e7eb;
+    }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--secondary);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      padding: 3rem 1rem 1.5rem 1rem;
+      background: var(--card);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--primary);
+      letter-spacing: -1px;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 1.2rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .timeline-container {
+      overflow-x: auto;
+      padding: 3rem 0 2rem 0;
+      white-space: nowrap;
+      scrollbar-color: var(--primary) var(--secondary);
+      scrollbar-width: thin;
+    }
+    .timeline {
+      display: flex;
+      align-items: flex-start;
+      position: relative;
+      min-width: 1200px;
+      padding: 0 2rem;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+      z-index: 0;
+      transform: translateY(-50%);
+      border-radius: 2px;
+    }
+    .event {
+      position: relative;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 4px 24px rgba(0,87,255,0.07);
+      padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+      margin: 0 1.5rem;
+      min-width: 260px;
+      max-width: 320px;
+      flex: 0 0 auto;
+      z-index: 1;
+      transition: transform 0.2s;
+      border: 1px solid var(--border);
+    }
+    .event:hover {
+      transform: translateY(-10px) scale(1.03);
+      box-shadow: 0 8px 32px rgba(0,87,255,0.13);
+      border-color: var(--primary);
+    }
+    .event .circle {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 50%;
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid var(--card);
+      box-shadow: 0 2px 8px rgba(0,87,255,0.10);
+      z-index: 2;
+    }
+    .event .date {
+      text-align: center;
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 1.1rem;
+      margin-bottom: 0.7rem;
+      margin-top: 0.5rem;
+      letter-spacing: 0.5px;
+    }
+    .event h3 {
+      font-size: 1.15rem;
+      margin: 0 0 0.5rem 0;
+      color: var(--text);
+      font-weight: 700;
+    }
+    .event p {
+      font-size: 1rem;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.5;
+    }
+    @media (max-width: 900px) {
+      .timeline {
+        min-width: 900px;
+      }
+      .event {
+        min-width: 220px;
+        max-width: 260px;
+        padding: 1.2rem 0.8rem 1rem 0.8rem;
+      }
+    }
+    @media (max-width: 600px) {
+      header h1 {
+        font-size: 1.5rem;
+      }
+      .timeline {
+        min-width: 600px;
+        padding: 0 0.5rem;
+      }
+      .event {
+        min-width: 160px;
+        max-width: 200px;
+        padding: 1rem 0.5rem 0.7rem 0.5rem;
+      }
+      .event h3 {
+        font-size: 1rem;
+      }
+      .event .date {
+        font-size: 0.95rem;
+      }
+    }
+    /* Custom scrollbar */
+    .timeline-container::-webkit-scrollbar {
+      height: 10px;
+    }
+    .timeline-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: 5px;
+    }
+    .timeline-container::-webkit-scrollbar-track {
+      background: var(--secondary);
+    }
+    .event .event-details {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+      margin-top: 0;
+    }
+    .event.expanded .event-details {
+      max-height: 200px;
+      opacity: 1;
+      margin-top: 0.5rem;
+    }
+    .event {
+      cursor: pointer;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.25);
+      z-index: 1000;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 40px rgba(0,87,255,0.18);
+      padding: 2rem 2.5rem 1.5rem 2.5rem;
+      min-width: 320px;
+      max-width: 90vw;
+      z-index: 1001;
+      text-align: center;
+      animation: modalIn 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translate(-50%, -60%); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1.5rem;
+      background: none;
+      border: none;
+      font-size: 2rem;
+      color: #888;
+      cursor: pointer;
+    }
+    .modal-date {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .modal-desc {
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+    @media (max-width: 600px) {
+      .modal {
+        min-width: 180px;
+        padding: 1rem 0.7rem 1rem 0.7rem;
+      }
+      .modal-title {
+        font-size: 1.05rem;
+      }
+      .modal-date {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Chronologie de l'Histoire de France</h1>
+    <p>Un aperçu visuel des grandes étapes qui ont façonné la France, de la Préhistoire à nos jours.</p>
+  </header>
+  <div class="timeline-container">
+    <div class="timeline">
+      <!-- Préhistoire -->
+      <div class="event" onclick="openModal('-15 000 av. J.-C.', 'Préhistoire & Peintures de Lascaux', 'Présence humaine ancienne, art rupestre remarquable dans la grotte de Lascaux.')">
+        <div class="circle"></div>
+        <div class="date">-15 000 av. J.-C.</div>
+        <h3>Préhistoire & Peintures de Lascaux</h3>
+      </div>
+      <!-- Gaule et Rome -->
+      <div class="event" onclick="openModal('-52 av. J.-C.', 'Conquête de la Gaule par Jules César', 'La Gaule celtique est intégrée à l’Empire romain après la défaite de Vercingétorix à Alésia.')">
+        <div class="circle"></div>
+        <div class="date">-52 av. J.-C.</div>
+        <h3>Conquête de la Gaule par Jules César</h3>
+      </div>
+      <!-- Clovis -->
+      <div class="event" onclick="openModal('496', 'Baptême de Clovis', 'Clovis, roi des Francs, se convertit au christianisme, unifiant les Francs et posant les bases de la France.')">
+        <div class="circle"></div>
+        <div class="date">496</div>
+        <h3>Baptême de Clovis</h3>
+      </div>
+      <!-- Charlemagne -->
+      <div class="event" onclick="openModal('800', 'Charlemagne, Empereur d’Occident', 'Charlemagne est couronné empereur, favorisant la renaissance culturelle carolingienne.')">
+        <div class="circle"></div>
+        <div class="date">800</div>
+        <h3>Charlemagne, Empereur d’Occident</h3>
+      </div>
+      <!-- Capétiens -->
+      <div class="event" onclick="openModal('987', 'Début de la dynastie capétienne', 'Hugues Capet devient roi, assurant la continuité monarchique pendant des siècles.')">
+        <div class="circle"></div>
+        <div class="date">987</div>
+        <h3>Début de la dynastie capétienne</h3>
+      </div>
+      <!-- Guerre de Cent Ans -->
+      <div class="event" onclick="openModal('1337-1453', 'Guerre de Cent Ans', 'Conflit majeur contre l’Angleterre, marqué par Jeanne d’Arc et la reconquête du territoire français.')">
+        <div class="circle"></div>
+        <div class="date">1337-1453</div>
+        <h3>Guerre de Cent Ans</h3>
+      </div>
+      <!-- Renaissance -->
+      <div class="event" onclick="openModal('XVIe siècle', 'Renaissance française', 'Essor des arts, de la science et de la pensée humaniste sous François Ier.')">
+        <div class="circle"></div>
+        <div class="date">XVI<sup>e</sup> siècle</div>
+        <h3>Renaissance française</h3>
+      </div>
+      <!-- Guerres de Religion -->
+      <div class="event" onclick="openModal('1562-1598', 'Guerres de Religion', 'Conflits entre catholiques et protestants, édit de Nantes accordant la tolérance religieuse.')">
+        <div class="circle"></div>
+        <div class="date">1562-1598</div>
+        <h3>Guerres de Religion</h3>
+      </div>
+      <!-- Louis XIV -->
+      <div class="event" onclick="openModal('1643-1715', 'Règne de Louis XIV', 'Le « Roi Soleil » incarne l’absolutisme, fait construire Versailles et rayonne sur l’Europe.')">
+        <div class="circle"></div>
+        <div class="date">1643-1715</div>
+        <h3>Règne de Louis XIV</h3>
+      </div>
+      <!-- Révolution française -->
+      <div class="event" onclick="openModal('1789', 'Révolution française', 'Prise de la Bastille, fin de la monarchie absolue, proclamation des droits de l’homme et du citoyen.')">
+        <div class="circle"></div>
+        <div class="date">1789</div>
+        <h3>Révolution française</h3>
+      </div>
+      <!-- Napoléon -->
+      <div class="event" onclick="openModal('1804-1815', 'Empire napoléonien', 'Napoléon Bonaparte devient empereur, réforme la France avec le Code civil, conquiert l’Europe.')">
+        <div class="circle"></div>
+        <div class="date">1804-1815</div>
+        <h3>Empire napoléonien</h3>
+      </div>
+      <!-- Troisième République -->
+      <div class="event" onclick="openModal('1870-1940', 'Troisième République', 'Développement industriel, expansion coloniale, crise de l’Affaire Dreyfus, laïcité (loi de 1905).')">
+        <div class="circle"></div>
+        <div class="date">1870-1940</div>
+        <h3>Troisième République</h3>
+      </div>
+      <!-- Première Guerre mondiale -->
+      <div class="event" onclick="openModal('1914-1918', 'Première Guerre mondiale', 'Conflit mondial, batailles de la Marne et de Verdun, lourdes pertes humaines.')">
+        <div class="circle"></div>
+        <div class="date">1914-1918</div>
+        <h3>Première Guerre mondiale</h3>
+      </div>
+      <!-- Seconde Guerre mondiale -->
+      <div class="event" onclick="openModal('1939-1945', 'Seconde Guerre mondiale', 'Occupation allemande, Résistance, Libération en 1944, rôle de Charles de Gaulle.')">
+        <div class="circle"></div>
+        <div class="date">1939-1945</div>
+        <h3>Seconde Guerre mondiale</h3>
+      </div>
+      <!-- Cinquième République -->
+      <div class="event" onclick="openModal('1958', 'Naissance de la Cinquième République', 'Nouvelle Constitution, présidence forte, Charles de Gaulle au pouvoir.')">
+        <div class="circle"></div>
+        <div class="date">1958</div>
+        <h3>Naissance de la Cinquième République</h3>
+      </div>
+      <!-- Mai 68 -->
+      <div class="event" onclick="openModal('1968', 'Mai 68', 'Grand mouvement social et étudiant, revendications pour plus de libertés et de droits sociaux.')">
+        <div class="circle"></div>
+        <div class="date">1968</div>
+        <h3>Mai 68</h3>
+      </div>
+      <!-- Union européenne -->
+      <div class="event" onclick="openModal('1992', 'Traité de Maastricht', 'Création de l’Union européenne, la France adopte l’euro en 2002.')">
+        <div class="circle"></div>
+        <div class="date">1992</div>
+        <h3>Traité de Maastricht</h3>
+      </div>
+      <!-- France contemporaine -->
+      <div class="event" onclick="openModal('XXIe siècle', 'France contemporaine', 'Défis sociaux, immigration, laïcité, lutte contre le terrorisme, rayonnement culturel mondial.')">
+        <div class="circle"></div>
+        <div class="date">XXI<sup>e</sup> siècle</div>
+        <h3>France contemporaine</h3>
+      </div>
+    </div>
+  </div>
+  <!-- Modal Structure -->
+  <div id="event-modal-overlay" class="modal-overlay" onclick="closeModal()"></div>
+  <div id="event-modal" class="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div class="modal-date" id="modal-date"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-desc" id="modal-desc"></div>
+  </div>
+  <script>
+    function openModal(date, title, desc) {
+      document.getElementById('modal-date').innerHTML = date;
+      document.getElementById('modal-title').innerHTML = title;
+      document.getElementById('modal-desc').innerHTML = desc;
+      document.getElementById('event-modal').style.display = 'block';
+      document.getElementById('event-modal-overlay').style.display = 'block';
+    }
+    function closeModal() {
+      document.getElementById('event-modal').style.display = 'none';
+      document.getElementById('event-modal-overlay').style.display = 'none';
+    }
+    // Prevent modal click from closing when clicking inside
+    document.getElementById('event-modal').addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
+  </script>
+</body>
+</html>
